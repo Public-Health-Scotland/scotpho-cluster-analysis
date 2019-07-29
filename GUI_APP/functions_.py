@@ -55,11 +55,12 @@ def rank_by_profiles(df,df_profiles,option):
     profiles_ = df_profiles.as_matrix()
 
     #for every row at dataset check if the indicator match with the profile
+
     for row in main_matrix:
         for row_prof in profiles_:
-            if(row[0]== row_prof[1]):
-                index_ = unique_profiles.index(row_prof[0])
-                dict_ = {'Indicator': row[0], 'definition': row[10],'area_name': row[1], 'area_type': row[3], 'year':row[4], 'actual_diff': row[12], 'Profile':row_prof[0]}
+            if(row[0]== row_prof[2]):
+                index_ = unique_profiles.index(row_prof[1])
+                dict_ = {'Indicator': row[0], 'definition': row[10],'area_name': row[1], 'area_type': row[3], 'year':row[4], 'actual_diff': row[12], 'Profile':row_prof[1]}
                 dict_list[index_].append(dict_)
     
     return dict_list

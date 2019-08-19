@@ -27,7 +27,7 @@ from matplotlib.backends.backend_tkagg import (
     FigureCanvasTkAgg, NavigationToolbar2Tk)
 import matplotlib.animation as animation
 from matplotlib import style
-
+import matplotlib.patches as mpatches
 # =============================================================================
 # Datasets
 # =============================================================================
@@ -164,7 +164,7 @@ class HomePage(tk.Frame):
         text2.insert(tk.END, features, 'color')
         
         text2.insert(tk.END,'\nUsefulness:\n\n', 'big')
-        usefulness  = 'Τhe indicators that belong to the same cluster may correlate with each other.\nAn identification of ONE bad indicator will lead to the identification of many other bad indicators.\nAs a result, a strategy to alleviate one indicator may lead to the alleviation of many more.\nThe topK tool can be used to summarise how an area performs but also it may be used by the users to identify really bad or good indicators so to use them at the clustering results.\nThe similarity tool can provide to the user a deep understanding of similarity between areas.'
+        usefulness  = 'Τhe indicators that belong to the same cluster may correlate with each other.\nAn identification of ONE bad indicator will lead to the identification of many other bad indicators.\nAs a result, a strategy to alleviate one indicator may lead to the alleviation of many more.\nThe topK tool can be used to summarise how an area performs but also it may be used by the users to identify really bad or good indicators so to use them at the clustering results.\nThe similarity tool can provide to the user a deep understanding of similarity between areas.\n Please press the help buttons at each page if you are not familiar with the concepts that this project uses.'
         text2.insert(tk.END, usefulness, 'color')
        
         text2.pack(side=tk.TOP, anchor = tk.CENTER)
@@ -254,6 +254,7 @@ class Clustering(tk.Frame):
                 res_pca_all = PCA_for_kmeans(points_scaled_all,2)
                 dbscan = DBSCAN(eps=0.123, min_samples = 2)
                 clusters = dbscan.fit_predict(res_pca_all.values)
+                
                 Visualise_Clusters_dbscan_(self,res_pca_all.values, clusters , 'PCA and DBSCAN at '+ area_type+ ' '+area_name+' '+str(year) )
                 if(option == 'yes'):
                     to_Export = display_indicators_per_cluster_1(input_, clusters)
@@ -288,7 +289,7 @@ class Clustering(tk.Frame):
                  color='r')
                 k= k+1
             
-            self.kmeans_.set_title('groups of indicators: Clustering Result ( '+title+' )', fontsize = 12.0,fontweight="bold")
+            self.kmeans_.set_title('groups of indicators: Grouping Result ( '+title+' )', fontsize = 12.0,fontweight="bold")
             self.kmeans_.set_xticks([])
             self.kmeans_.set_yticks([])
             self.kmeans_.set_xlabel('First Feature', fontsize = 12.0)
@@ -304,13 +305,14 @@ class Clustering(tk.Frame):
 # =============================================================================
         def Visualise_Clusters_dbscan_(self,points,clusters, title):  
             
-            self.dbscan_.scatter(points[:, 0], points[:, 1], c = clusters, s=60, cmap = "plasma")
-            self.dbscan_.set_title('groups of indicators: Clustering Result ( '+title+' )', fontsize = 12.0,fontweight="bold" )
+            self.dbscan_.scatter(points[:, 0], points[:, 1], c = clusters, s=60, cmap = "tab20")
+            self.dbscan_.set_title('groups of indicators: Grouping Result ( '+title+' )', fontsize = 12.0,fontweight="bold" )
             self.dbscan_.set_xticks([])
             self.dbscan_.set_yticks([])
             self.dbscan_.set_xlabel('First Feature', fontsize = 12.0)
             self.dbscan_.set_ylabel('Second Feature', fontsize = 12.0)
-            
+            blue_patch = mpatches.Patch(color='steelblue', label = 'Outlier')
+            self.dbscan_.legend(handles=[blue_patch])
             if(self.skiniko != None):
                 self.skiniko.pack_forget()
             
@@ -374,7 +376,10 @@ class Clustering(tk.Frame):
             area_level_selected = geography_level.get()
             area_n = dataset_all[dataset_all['area_type'] == area_level_selected]['area_name'].unique()
             area_val = list(area_n)
-            area_name_list['values'] = area_val
+            #area_val = area_val.sort()
+            sort_area = sorted(area_val)
+            area_name_list['values'] = sort_area
+            
             year_list.set('select')
         
         
@@ -403,7 +408,10 @@ class Clustering(tk.Frame):
              area_selected = area_name_list.get()
              years = dataset_all[dataset_all['area_name'] == area_selected]['year'].unique()
              years_val = list(years)
-             year_list['values'] = years_val
+             years_val_sorted  = sorted(years_val)
+             year_list['values'] = years_val_sorted
+             
+             
         
         area_name_l = ttk.Label(option_bar, text= 'Area Name')
         area_name_l.pack(side = 'left', padx = 3)
@@ -430,7 +438,7 @@ class Clustering(tk.Frame):
 #         initialising the variables as class variables. 
 #         This will allow the canvas to get updated for different areas values.
 # =============================================================================
-        self.CheckVar = tk.IntVar(self, value=1)
+        self.CheckVar = tk.IntVar(self, value=0)
         checkaki = ttk.Checkbutton(option_bar, variable= self.CheckVar, text="Save results")
         checkaki.pack(side ='left', padx=3)
         self.canvas = None
@@ -496,7 +504,7 @@ class Clustering(tk.Frame):
          
         #function of help button
         def explain():
-            popupmsg('This page depicts the clustering results. Each datapoint is an indicator. The indicators that belong to the same cluster are similar in term of some features (see Homepage). \n If you want to see the indicators of each cluster please select the save option; the app will create an excel workbook.\nPlease select the values from the left to the right.')
+            popupmsg('This page depicts the grouping results After performing two clustering Algorithms on the 13 derived features from ScotPHOS dataset; Kmeans and DBSCAN.\nPCA is a dimensionality reduction method; I used it so plot the data in 2D space.\nEach datapoint is an indicator. The indicators that belong to the same cluster are similar in term of some features (see Homepage). \nIf you want to see the indicators of each cluster please select the save option; the app will create an excel workbook at the ''Clustering_Results'' folder.\nPlease select the values from the left to the right.')
             
             
         
@@ -564,7 +572,8 @@ class TopK(tk.Frame):
             area_level_selected = geography_level.get()
             area_n = dataset_all[dataset_all['area_type'] == area_level_selected]['area_name'].unique()
             area_val = list(area_n)
-            area_name_list['values'] = area_val
+            area_val_sorted = sorted(area_val)
+            area_name_list['values'] = area_val_sorted
         
 # =============================================================================
 #         seond frame
@@ -593,7 +602,8 @@ class TopK(tk.Frame):
              area_selected = area_name_list.get()
              years = dataset_all[dataset_all['area_name'] == area_selected]['year'].unique()
              years_val = list(years)
-             year_list['values'] = years_val
+             years_val_sorted = sorted(years_val)
+             year_list['values'] = years_val_sorted
         
         area_name_l = ttk.Label(option_bar, text= 'Area Name')
         area_name_l.pack(side = 'left', padx = 3)
@@ -625,13 +635,13 @@ class TopK(tk.Frame):
         table_frame = tk.Frame(self)
         
         
-        cols = ('Index','Indicator', 'Area Name', 'Area Type','Difference From Scotland','Year', 'Definition'  )
+        cols = ('Indicator','Difference From Scotland','Year', 'Definition'  )
         listBox = ttk.Treeview(table_frame, columns=cols, show='headings')
         
-        cols1= ['Index','Indicator', 'Profile', 'Difference From Scotland', 'Area Name', 'Area Type','Definition', 'Year']
+        cols1= ['Indicator', 'Profile', 'Difference From Scotland','Definition', 'Year']
         listBox1 = ttk.Treeview(table_frame, columns=cols1, show='headings')
         
-        cols2 = ('Index','Indicator', 'Area Name', 	'Area Type', 	'Year', 	'Measure', 'Difference Between Areas' )
+        cols2 = ('Indicator', 'Area Name', 	'Area Type', 	'Year', 	'Measure', 'Difference Between Areas' )
         listBox2 = ttk.Treeview(table_frame, columns=cols2, show='headings')
        
         label_top_k = tk.Label(table_frame, font=LARGE_FONT)
@@ -668,7 +678,7 @@ class TopK(tk.Frame):
 # TOP K : calling the function and fill the table.    
 # =============================================================================                
                 
-                label_top_k['text']= 'TOP '+k+' '+option+ ' COMPARED TO SCOTLAND'
+                label_top_k['text']= 'Top '+k+' '+option+ ' Indicators '+'of '+area+'@'+geo+ ' Compared to Scotland'
                 label_top_k.pack(pady=2)
                 
                 for col in cols:
@@ -679,10 +689,12 @@ class TopK(tk.Frame):
                 
                 df_ = select_df(dataset_all_, str(geo), str(area), int(year))
                 dfaki = top_k(df_, int(k), str(option))
+                dfaki= dfaki.round(2)
+                dfaki= dfaki[['indicator','year','actual_diff','definition']]
                 dfaki = dfaki.values.tolist()
                 print(dfaki[0])
-                for i, (indicator, area_name, area_type, year, actual_diff, definition) in enumerate(dfaki, start=1):
-                    listBox.insert("", "end", values=(i, indicator, area_name, area_type, actual_diff, year, definition))
+                for i, (indicator, year, actual_diff, definition) in enumerate(dfaki, start=1):
+                    listBox.insert("", "end", values=( indicator, actual_diff, year, definition))
                 
                
 # =============================================================================
@@ -690,7 +702,7 @@ class TopK(tk.Frame):
 # =============================================================================
             
                 
-                label_top_profile['text'] = 'TOP '+str(k)+' '+str(option)+' PER PROFILE COMPARED TO SCOTLAND'
+                label_top_profile['text'] = 'Top '+str(option)+' Indicators per Profile of '+area+'@'+geo+ ' Compared to Scotland'
                 label_top_profile.pack(pady=2)
               
                 
@@ -700,6 +712,7 @@ class TopK(tk.Frame):
                 # rank_by_profiles returns a list of lists of dictionaries.
                 #the List contains a list for every different profile.
                 dfaki1 = rank_by_profiles(df_,prof_ind,option)
+                
                 listaki = []
                 for l in dfaki1:
                     top_ = 1
@@ -709,20 +722,20 @@ class TopK(tk.Frame):
                         if(top_ == int(k)):
                             break
                 dfakos = pd.DataFrame(listaki)
-                dfakos_ = dfakos[['Indicator', 'Profile', 'actual_diff', 'area_name', 'area_type',
-       'definition', 'year']].values.tolist()
+                dfakos = dfakos.round(2)
+                dfakos_ = dfakos[['Indicator', 'Profile', 'actual_diff', 'definition', 'year']].values.tolist()
         
         
                 #dfakos_ contains a list of lists. every row of the dataframe is an 'inside' list.          
-                for i, (indicator, profile_name, actual_diff, area_name, area_type, definition, year) in enumerate(dfakos_, start=1):
-                     listBox1.insert("", "end", values=(i,indicator, profile_name, actual_diff, area_name, area_type, definition, year))
+                for  i, (indicator, profile_name, actual_diff, definition, year) in enumerate(dfakos_, start=1):
+                     listBox1.insert("", "end", values=(indicator, profile_name, actual_diff, definition, year))
                      
                 listBox1.pack(pady=2)
 # =============================================================================
 # =============================================================================
 # Similarity             
-# =============================================================================
-                label2['text'] = "TOP "+str(k)+' SIMILAR BETWEEN AREAS'
+# =========================================================INDICATORS====================
+                label2['text'] = "Top "+str(k)+' Similar indicators at '+area+'@'+geo+' Between Areas'
                 label2.pack(pady=2)
       
           
@@ -731,11 +744,12 @@ class TopK(tk.Frame):
                
 
                 _dfaki =  find_the_most_Similar(df_,int(k))
+                _dfaki.round(3)
     
                 list_dfaki = _dfaki[['indicator', 'area_name', 	'area_type', 	'year', 	'measure', 'sim_diff']].values.tolist()
           
                 for i, (indicator, area_name, 	area_type, year, 	measure, sim_diff) in enumerate(list_dfaki, start=1):
-                    listBox2.insert("", "end", values=(i, indicator, area_name, area_type, year, measure, sim_diff))
+                    listBox2.insert("", "end", values=( indicator, area_name, area_type, year, measure, sim_diff))
                     
                 listBox2.pack(pady=2)
 
@@ -772,7 +786,7 @@ class TopK(tk.Frame):
         
         #help button function
         def explain():
-            popupmsg('This page depicts the TOPK and similarities results.\nThe second table depicts the TOPK indicators per profile(Health...tobacco..etc).\nPlease select the values from the left to the right. ')
+            popupmsg('This page depicts the TOPK and similarities results.\nThe second table depicts the TOPK indicators per profile(Health...tobacco..etc).\nK depicts the number of indicators to be retrieved.\nOption means when the indicators perform better or worse than the Comparator(Scotland).\nPlease select the values from the left to the right.')
         
         search_button = ttk.Button(option_bar, text= 'SEARCH', command = search_m)
         search_button.pack(side = 'left', padx = 3)
